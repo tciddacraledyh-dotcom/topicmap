@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>トピックマップ｜カニバリ分析ツール</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1f3864;--navy2:#33508a;--ink:#1a2233;--muted:#6b7280;--line:#e3e7ee;--bg:#f6f8fb;--surface:#fff;--warn:#c0392b;--ok:#2e7d5b;--soft:#eef2f8;--accentbg:#eaf0fb}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:"Noto Sans JP",system-ui,sans-serif;color:var(--ink);background:var(--bg);font-size:14px;line-height:1.6}
+header{background:var(--navy);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header h1{font-size:16px;font-weight:700;margin:0}header h1 small{display:block;font-size:11px;font-weight:400;opacity:.7}
+.spacer{flex:1}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+select,input,textarea,button{font-family:inherit;font-size:13px}
+.proj select{background:#fff;border:none;border-radius:6px;padding:7px 10px;color:var(--ink);font-weight:500}
+header button{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:7px 11px;cursor:pointer}
+header button:hover{background:rgba(255,255,255,.24)}
+nav{background:var(--surface);border-bottom:1px solid var(--line);padding:0 20px;display:flex;gap:4px;overflow-x:auto}
+nav button{background:none;border:none;border-bottom:2px solid transparent;padding:13px 14px;cursor:pointer;color:var(--muted);font-weight:500;white-space:nowrap}
+nav button.active{color:var(--navy);border-bottom-color:var(--navy)}
+main{padding:20px;max-width:1280px;margin:0 auto}
+.panel{display:none}.panel.active{display:block}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.btn{background:var(--navy);color:#fff;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-weight:500}
+.btn:hover{background:var(--navy2)}.btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
+.fld{border:1px solid var(--line);border-radius:6px;padding:7px 9px;background:#fff}
+.note{color:var(--muted);font-size:12px;margin:6px 0 14px}
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;table-layout:fixed}
+.mapwrap td,.mapwrap th{white-space:normal;word-break:break-word;overflow:hidden}
+th.rzh{position:relative}
+.rz{position:absolute;top:0;right:0;width:8px;height:100%;cursor:col-resize;user-select:none}
+.rz:hover{background:var(--navy2);opacity:.35}
+th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top;font-size:12.5px}
+th{background:var(--soft);color:var(--navy);font-weight:700;white-space:nowrap;cursor:pointer;user-select:none}
+th:hover{background:#e4ebf6}
+.frow th{background:#fff;cursor:default;padding:4px 6px}
+.frow th:hover{background:#fff}
+.fsel{width:100%;border:1px solid var(--line);border-radius:5px;padding:3px 4px;font-size:11px;color:var(--ink)}
+th .ar{color:var(--navy2);font-size:10px;margin-left:3px}
+tr:hover td{background:#fbfcfe}
+td.kw{font-weight:500}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:500;white-space:nowrap}
+.b-pillar{background:#fde9d9;color:#9a4b16}.b-mid{background:#fff2cc;color:#8a6d00}.b-leaf{background:var(--soft);color:var(--muted)}.b-solo{background:#f3e8f0;color:#7a4a6f}
+.pchip{display:inline-block;min-width:22px;text-align:center;border-radius:6px;font-weight:700;padding:1px 6px}
+.pc3{background:#f6e0cd;color:#9a4b16}.pc2{background:#e1e8f6;color:var(--navy)}.pc1{background:#eee;color:var(--muted)}
+.stt{font-size:11px;padding:2px 8px;border-radius:999px}
+.s-pub{background:#e8f3ee;color:var(--ok)}.s-wip{background:#fff2cc;color:#8a6d00}.s-todo{background:var(--soft);color:var(--muted)}
+.pager{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin:14px 0 4px}
+.pgbtn{background:#fff;border:1px solid var(--line);border-radius:7px;padding:6px 12px;cursor:pointer;color:var(--navy);font-weight:500}
+.pgbtn:hover:not(:disabled){background:var(--accentbg);border-color:var(--navy2)}
+.pgbtn:disabled{opacity:.4;cursor:default}
+.pginfo{color:var(--muted);font-size:12.5px;margin:0 4px}
+.editbtn{background:#fff;border:1px solid var(--line);border-radius:6px;padding:4px 11px;cursor:pointer;color:var(--navy);font-weight:500}
+.editbtn:hover{border-color:var(--navy2);background:var(--accentbg)}
+.urlcell{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--navy2)}
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(20,28,45,.45);display:none;align-items:flex-start;justify-content:center;padding:30px 16px;overflow:auto;z-index:50}
+.overlay.show{display:flex}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:560px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}
+.modal h3{margin:0;padding:16px 20px;background:var(--navy);color:#fff;font-size:15px}
+.mbody{padding:18px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+.mbody .full{grid-column:1/3}
+.mbody label{display:block;font-size:11px;color:var(--muted);margin-bottom:3px;font-weight:500}
+.mbody input,.mbody select,.mbody textarea{width:100%;border:1px solid var(--line);border-radius:7px;padding:8px 9px;font-size:13px}
+.mbody textarea{resize:vertical;min-height:60px}
+.auto{font-size:12px;color:var(--ink);background:var(--soft);border-radius:7px;padding:8px 10px}
+.mfoot{display:flex;gap:8px;align-items:center;padding:14px 20px;border-top:1px solid var(--line)}
+.mfoot .spacer{flex:1}
+.danger{background:#fff;border:1px solid #e6b4ad;color:var(--warn);border-radius:7px;padding:8px 12px;cursor:pointer}
+.danger:hover{background:#fdecea}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;gap:14px;align-items:flex-start}
+.card .k{font-weight:700}.card .meta{color:var(--muted);font-size:12px}
+.prbadge{min-width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;flex:none}
+.pr3{background:#c97a3a}.pr2{background:var(--navy2)}.pr1{background:#9aa3b2}
+textarea.big{width:100%;min-height:140px;border:1px solid var(--line);border-radius:8px;padding:10px;font-size:13px}
+.section-h{font-size:14px;font-weight:700;color:var(--navy);margin:18px 0 8px}
+.flag-ng{color:var(--warn);font-weight:700}.flag-ok{color:var(--ok);font-weight:700}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:.95}
+@media (max-width:560px){.mbody{grid-template-columns:1fr}.mbody .full{grid-column:1}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>トピックマップ<small>クラスター設計とカニバリ分析</small></h1>
+  <div class="proj toolbar">
+    <label style="font-size:12px;opacity:.85">プロジェクト</label>
+    <select id="projSel" onchange="switchProject(this.value)"></select>
+    <button onclick="newProject()">＋新規</button>
+  </div>
+  <div class="spacer"></div>
+  <div class="toolbar">
+    <span id="syncState" style="font-size:11px;opacity:.85"></span>
+    <button onclick="exportJSON()">書き出し</button>
+    <button onclick="document.getElementById('imp').click()">読み込み</button>
+    <input id="imp" type="file" accept="application/json" style="display:none" onchange="importJSON(event)">
+  </div>
+</header>
+<nav>
+  <button class="tab active" data-t="map" onclick="tab('map')">全体マップ</button>
+  <button class="tab" data-t="pri" onclick="tab('pri')">優先テーマ</button>
+  <button class="tab" data-t="chk" onclick="tab('chk')">カニバリチェック</button>
+  <button class="tab" data-t="set" onclick="tab('set')">設定</button>
+</nav>
+<main>
+  <section id="map" class="panel active">
+    <div class="bar">
+      <input id="fId" class="fld" placeholder="記事ID／親記事ID（例 F0001）" oninput="page=1;renderMap()" style="min-width:170px">
+      <input id="fKw" class="fld" placeholder="キーワード・意図で絞り込み" oninput="page=1;renderMap()" style="min-width:200px">
+      <button class="btn ghost" onclick="clearAllFilters()">絞り込み解除</button>
+      <span class="spacer"></span>
+      <button class="btn" onclick="openEdit(-1)">＋記事を追加</button>
+    </div>
+    <div class="note">左上の「記事ID／親記事ID」欄にF0001と入れると、F0001本体と、F0001を親に持つクラスターが両方表示されます。見出しクリックで並び替え。編集は各行の「編集」ボタンから。</div>
+    <div class="tablewrap mapwrap"><table id="mapTable"></table></div>
+    <div id="pager" class="pager"></div>
+  </section>
+
+  <section id="pri" class="panel">
+    <div class="note">未公開の候補を優先度（◎○△）順に並べています。</div>
+    <div id="priList"></div>
+  </section>
+
+  <section id="chk" class="panel">
+    <div class="section-h">新しい構成案の見出しをチェック</div>
+    <div class="note">新規の見出しを、このプロジェクトの公開済み記事すべての検索意図と照合します。意図で見るAI判定です。</div>
+    <textarea id="chkInput" class="big" placeholder="見出しを1行に1つ貼り付け&#10;例）&#10;利回りの目安&#10;初期費用の内訳&#10;リスクの考え方"></textarea>
+    <div class="bar" style="margin-top:10px">
+      <button class="btn" onclick="aiCheck()">AIで意図判定（Sonnet）</button>
+      <span class="note" id="aiState" style="margin:0"></span>
+    </div>
+    <div id="chkResult"></div>
+  </section>
+
+  <section id="set" class="panel">
+    <div class="section-h">ドライブ自動保存（消えない保存先）</div>
+    <div class="note">Apps ScriptのウェブアプリURLと合言葉を入れると、編集が自動でドライブの保存箱に保存されます。別の端末でも、同じURLと合言葉を入れて「保存箱から読み込む」で同じデータを開けます。</div>
+    <div style="display:grid;grid-template-columns:1fr;gap:8px;max-width:600px">
+      <input id="dUrl" class="fld" placeholder="ウェブアプリURL（https://script.google.com/macros/s/.../exec）" oninput="saveDriveCfg()">
+      <input id="dKey" class="fld" placeholder="合言葉" oninput="saveDriveCfg()">
+    </div>
+    <div class="bar" style="margin-top:10px">
+      <button class="btn" onclick="pushDrive(true)">保存箱に送る（今のデータ）</button>
+      <button class="btn ghost" onclick="pullDrive(false)">保存箱から読み込む</button>
+      <span class="note" id="syncState2" style="margin:0"></span>
+    </div>
+    <div class="section-h" style="margin-top:22px">AI意図判定の中継URL</div>
+    <div class="note">Cloudflare WorkerのURLをここに貼ります。空だとカニバリチェックは使えません。</div>
+    <input id="relayInput" class="fld" style="width:100%;max-width:560px" placeholder="https://xxxx.workers.dev" oninput="saveRelay()">
+    <div class="section-h" style="margin-top:20px">プロジェクト操作</div>
+    <div class="bar">
+      <button class="btn ghost" onclick="renameProject()">名前を変更</button>
+      <button class="btn ghost" style="color:var(--warn)" onclick="deleteProject()">このプロジェクトを削除</button>
+    </div>
+  </section>
+</main>
+
+<!-- 編集モーダル -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3 id="mTitle">記事を編集</h3>
+    <div class="mbody">
+      <div><label>記事ID</label><input id="m_id" placeholder="未公開なら空でOK"></div>
+      <div><label>親記事ID</label><input id="m_parent"></div>
+      <div class="full"><label>役割・子記事数（自動）</label><div class="auto" id="m_auto">—</div></div>
+      <div class="full"><label>記事タイトル</label><input id="m_title"></div>
+      <div class="full"><label>メインKW</label><input id="m_kw"></div>
+      <div class="full"><label>検索意図</label><textarea id="m_intent"></textarea></div>
+      <div><label>読者の段階</label><select id="m_stage"></select></div>
+      <div><label>ステータス</label><select id="m_status"></select></div>
+      <div><label>優先度</label><select id="m_priority"></select></div>
+      <div><label>公開URL</label><input id="m_url"></div>
+      <div><label>構成案URL</label><input id="m_draft" placeholder="ドキュメント等のリンク"></div>
+      <div class="full"><label>備考</label><input id="m_memo"></div>
+    </div>
+    <div class="mfoot">
+      <button class="danger" id="mDel" onclick="delFromModal()">削除</button>
+      <span class="spacer"></span>
+      <button class="btn ghost" onclick="closeEdit()">キャンセル</button>
+      <button class="btn" onclick="saveEdit()">保存</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY="topicmap_app_v1";
+const SEED={"version": 1, "currentProject": "賃貸管理（LPPM）", "projects": {"賃貸管理（LPPM）": {"articles": [{"id": "F0001", "parent": "", "kw": "賃貸管理", "intent": "賃貸管理会社とは何かと選び方の全体像", "stage": "認知", "status": "公開済", "url": "https://lpppm.co.jp/chintai-kanri-kaisha-erabikata/", "priority": "", "memo": "傘の最上位ピラー", "title": ""}, {"id": "F0002", "parent": "F0001", "kw": "管理会社 見直し", "intent": "今の管理会社を見直すべきか", "stage": "比較〜決定", "status": "公開済", "url": "https://lpppm.co.jp/kanri-gaisha-minaoshi-erabikata/", "priority": "", "memo": "参考:既存×既存", "title": ""}, {"id": "F0013", "parent": "F0001", "kw": "管理会社 選び方", "intent": "選び方の具体チェックリスト", "stage": "比較〜決定", "status": "公開済", "url": "https://lpppm.co.jp/kanri-gaisha-erabikata-5point/", "priority": "", "memo": "参考:既存×既存", "title": ""}, {"id": "F0018", "parent": "F0001", "kw": "仲介会社 管理会社 違い", "intent": "仲介と管理の違い", "stage": "認知", "status": "公開済", "url": "https://lpppm.co.jp/chukai-kanri-chigai-handan/", "priority": "", "memo": "", "title": ""}, {"id": "F0010", "parent": "F0001", "kw": "委託管理 基礎 費用 契約", "intent": "委託管理の基礎と費用・契約", "stage": "認知", "status": "公開済", "url": "https://lpppm.co.jp/itaku-kanri-kiso-hiyou-keiyaku/", "priority": "", "memo": "元シートKW/URL入れ違いを修正", "title": ""}, {"id": "F0019", "parent": "F0001", "kw": "管理委託契約書 内容", "intent": "委託契約書の中身", "stage": "決定", "status": "公開済", "url": "https://lpppm.co.jp/kanri-itaku-keiyakusho-naiyou/", "priority": "", "memo": "", "title": ""}, {"id": "F0006", "parent": "F0001", "kw": "賃貸管理 手数料", "intent": "手数料の仕組み", "stage": "比較", "status": "公開済", "url": "https://lpppm.co.jp/chintai-kanri-tesuryo/", "priority": "", "memo": "費用サブピラー", "title": ""}, {"id": "F0003", "parent": "F0006", "kw": "賃貸管理 費用 相場", "intent": "管理費用の相場", "stage": "比較", "status": "公開済", "url": "https://lpppm.co.jp/chintai-kanri-tesuryo-souba/", "priority": "", "memo": "参考:既存×既存", "title": ""}, {"id": "F0015", "parent": "F0006", "kw": "賃貸管理 手数料 相場 月額", "intent": "月額の手数料相場", "stage": "比較", "status": "公開済", "url": "https://lpppm.co.jp/kanri-tesuryo-souba-getsugaku/", "priority": "", "memo": "参考:既存×既存", "title": ""}, {"id": "F0005", "parent": "F0006", "kw": "管理委託費 値上げ 相場", "intent": "委託費の値上げ相場", "stage": "比較", "status": "公開済", "url": "https://lpppm.co.jp/kanri-itakuhi-neage-souba/", "priority": "", "memo": "", "title": ""}, {"id": "F0007", "parent": "F0001", "kw": "管理会社 変更 手順", "intent": "変更の手順", "stage": "比較〜決定", "status": "公開済", "url": "https://lpppm.co.jp/kanri-gaisha-henkou-tejun-guide/", "priority": "", "memo": "変更サブピラー", "title": ""}, {"id": "F0004", "parent": "F0007", "kw": "管理会社 変更", "intent": "変更すべきか判断", "stage": "比較", "status": "公開済", "url": "https://lpppm.co.jp/kanri-gaisha-henkou/", "priority": "", "memo": "参考:既存×既存", "title": ""}, {"id": "F0023", "parent": "F0007", "kw": "管理会社 変更 タイミング", "intent": "いつ変更すべきか", "stage": "比較〜決定", "status": "公開済", "url": "https://lpppm.co.jp/kanri-gaisha-henko-timing/", "priority": "", "memo": "", "title": ""}, {"id": "F0012", "parent": "F0001", "kw": "管理会社 対応してくれない", "intent": "対応が悪い会社への対処", "stage": "決定", "status": "公開済", "url": "https://lpppm.co.jp/kanri-gaisha-taiou-shitekurenai/", "priority": "", "memo": "", "title": ""}, {"id": "F0016", "parent": "F0001", "kw": "管理会社 解約 手続き", "intent": "解約の手続き", "stage": "決定", "status": "公開済", "url": "https://lpppm.co.jp/kanri-gaisha-kaiyaku-tetsuduk/", "priority": "", "memo": "", "title": ""}, {"id": "F0009", "parent": "", "kw": "自主管理", "intent": "自主管理とは何かとリスク", "stage": "認知", "status": "公開済", "url": "https://lpppm.co.jp/jishu-kanri-risk-erabikata/", "priority": "", "memo": "傘の最上位ピラー", "title": ""}, {"id": "F0025", "parent": "F0009", "kw": "自主管理 デメリット", "intent": "自主管理のデメリット", "stage": "比較〜決定", "status": "公開済", "url": "https://lpppm.co.jp/jishu-kanri-demerit/", "priority": "", "memo": "参考:既存×既存", "title": ""}, {"id": "F0024", "parent": "", "kw": "サブリース とは", "intent": "サブリースの仕組みと手取り", "stage": "認知", "status": "公開済", "url": "https://lpppm.co.jp/sublease-toha-tedori-hikaku/", "priority": "", "memo": "傘の最上位ピラー", "title": ""}, {"id": "F0011", "parent": "F0024", "kw": "サブリース 解約できない", "intent": "解約できない理由と対処", "stage": "決定", "status": "公開済", "url": "https://lpppm.co.jp/sublease-kaiyaku-dekinai/", "priority": "", "memo": "元シートKW/URL入れ違いを修正", "title": ""}, {"id": "F0008", "parent": "", "kw": "空室対策", "intent": "空室対策の全体像", "stage": "認知〜比較", "status": "公開済", "url": "https://lpppm.co.jp/old-apartment-vacancy-measures/", "priority": "", "memo": "傘の最上位ピラー", "title": ""}, {"id": "F0026", "parent": "", "kw": "不動産 経営 始め方", "intent": "不動産経営の始め方の全体像", "stage": "認知", "status": "公開済", "url": "https://lpppm.co.jp/fudosan-keiei-hajimekata/", "priority": "", "memo": "傘の最上位ピラー", "title": ""}, {"id": "F0017", "parent": "F0026", "kw": "賃貸経営 リスク", "intent": "賃貸経営のリスク", "stage": "認知", "status": "公開済", "url": "https://lpppm.co.jp/rental-management-risk/", "priority": "", "memo": "", "title": ""}, {"id": "F0021", "parent": "F0026", "kw": "賃貸経営 利回り", "intent": "利回りの計算と目安", "stage": "比較", "status": "公開済", "url": "https://lpppm.co.jp/rental-yield-simulation/", "priority": "", "memo": "", "title": ""}, {"id": "F0014", "parent": "", "kw": "家賃保証会社 滞納", "intent": "保証会社がある場合の滞納対応", "stage": "決定", "status": "公開済", "url": "https://lpppm.co.jp/yachin-hosho-tainou-daiibensai/", "priority": "", "memo": "親ピラー新設提案中", "title": ""}, {"id": "F0020", "parent": "", "kw": "家賃滞納 立ち退き", "intent": "立ち退き手続き", "stage": "決定", "status": "公開済", "url": "https://lpppm.co.jp/yachin-tainou-tachinoki/", "priority": "", "memo": "親ピラー新設提案中", "title": ""}, {"id": "F0022", "parent": "", "kw": "家賃集金 代行 サービス", "intent": "集金代行サービス", "stage": "決定", "status": "公開済", "url": "https://lpppm.co.jp/yachin-shukin-daiko-service/", "priority": "", "memo": "親ピラー新設提案中", "title": ""}, {"id": "", "parent": "F0024", "kw": "サブリース 手数料 相場", "intent": "サブリースの手数料相場", "stage": "比較", "status": "未着手", "url": "", "priority": "◎", "memo": "", "title": ""}, {"id": "", "parent": "F0026", "kw": "マンション経営 初期費用", "intent": "初期費用の内訳と総額の目安", "stage": "比較", "status": "未着手", "url": "", "priority": "◎", "memo": "新規領域", "title": ""}, {"id": "", "parent": "F0026", "kw": "アパート経営 メリット デメリット", "intent": "アパート経営の損得", "stage": "認知〜比較", "status": "未着手", "url": "", "priority": "◎", "memo": "新規領域", "title": ""}, {"id": "", "parent": "F0001", "kw": "賃貸管理 始め方", "intent": "初めて委託する人の初動", "stage": "認知〜比較", "status": "未着手", "url": "", "priority": "○", "memo": "", "title": ""}, {"id": "", "parent": "F0001", "kw": "賃貸管理会社 種類", "intent": "管理会社の類型整理", "stage": "認知〜比較", "status": "未着手", "url": "", "priority": "○", "memo": "", "title": ""}, {"id": "", "parent": "F0001", "kw": "区分マンション 賃貸管理", "intent": "区分所有の管理の違い", "stage": "認知〜比較", "status": "未着手", "url": "", "priority": "○", "memo": "", "title": ""}, {"id": "", "parent": "F0001", "kw": "賃貸管理会社 業務範囲", "intent": "管理会社の業務範囲", "stage": "比較", "status": "未着手", "url": "", "priority": "○", "memo": "要対応:業務委託範囲と統合", "title": ""}, {"id": "", "parent": "F0001", "kw": "管理会社 業務委託 範囲", "intent": "委託できる業務の範囲", "stage": "比較〜決定", "status": "未着手", "url": "", "priority": "○", "memo": "要対応:業務範囲と統合", "title": ""}, {"id": "", "parent": "F0001", "kw": "賃貸管理会社 大手 中小 違い", "intent": "規模別の違い", "stage": "比較", "status": "未着手", "url": "", "priority": "○", "memo": "", "title": ""}, {"id": "", "parent": "F0001", "kw": "管理会社 比較 ポイント", "intent": "比較の観点一覧", "stage": "比較〜決定", "status": "未着手", "url": "", "priority": "○", "memo": "要対応:F0013を固定し角度変更", "title": ""}, {"id": "", "parent": "F0006", "kw": "管理費 修繕費 違い", "intent": "管理費と修繕費の違い", "stage": "認知", "status": "未着手", "url": "", "priority": "○", "memo": "", "title": ""}, {"id": "", "parent": "F0001", "kw": "管理会社 失敗例", "intent": "選定の失敗例", "stage": "比較〜決定", "status": "未着手", "url": "", "priority": "○", "memo": "", "title": ""}, {"id": "", "parent": "F0012", "kw": "管理会社 クレーム 対応 遅い", "intent": "クレーム対応の遅さへの対処", "stage": "決定", "status": "未着手", "url": "", "priority": "○", "memo": "要対応:F0012を固定し速度の角度へ", "title": ""}, {"id": "", "parent": "F0008", "kw": "アパート 入居率 上げる方法", "intent": "入居率を上げる方法", "stage": "決定", "status": "未着手", "url": "", "priority": "○", "memo": "", "title": ""}, {"id": "", "parent": "F0008", "kw": "空室率 全国平均", "intent": "空室率の全国平均データ", "stage": "認知〜比較", "status": "未着手", "url": "", "priority": "○", "memo": "", "title": ""}, {"id": "", "parent": "", "kw": "家賃滞納 内容証明 書き方", "intent": "内容証明の書き方", "stage": "決定", "status": "未着手", "url": "", "priority": "○", "memo": "新設ピラー配下に", "title": ""}, {"id": "", "parent": "", "kw": "賃貸経営 保証会社 役割", "intent": "保証会社の役割（オーナー視点）", "stage": "認知〜比較", "status": "未着手", "url": "", "priority": "○", "memo": "新設ピラー配下に", "title": ""}, {"id": "", "parent": "F0026", "kw": "マンション経営 ランニングコスト", "intent": "運営中の継続コスト", "stage": "比較", "status": "未着手", "url": "", "priority": "△", "memo": "要対応:初期費用と境界調整", "title": ""}]}}};
+const STAGES=["認知","認知〜比較","比較","比較〜決定","決定"];
+const STATUSES=["未着手","構成案作成中","公開済"];
+const PRIS=["","◎","○","△"];
+const PRIRANK={"◎":3,"○":2,"△":1,"":0};
+const STORANK={"未着手":0,"構成案作成中":1,"公開済":2};
+const STARANK={"認知":0,"認知〜比較":1,"比較":2,"比較〜決定":3,"決定":4};
+let state, sortKey="id", sortDir=1, editIdx=-1;
+
+function load(){
+  try{ state=JSON.parse(localStorage.getItem(KEY)); }catch(e){ state=null; }
+  if(!state||!state.projects){ state=JSON.parse(JSON.stringify(SEED)); }
+  normalize();
+  persistLocal();
+}
+function persistLocal(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+function save(){ persistLocal(); schedulePush(); }
+function normalize(){ Object.values(state.projects).forEach(p=>p.articles.forEach(a=>{ if(a.title===undefined)a.title=""; if(a.draft===undefined)a.draft=""; delete a.group; })); }
+/* ---- ドライブ同期 ---- */
+function driveCfg(){ return {url:(localStorage.getItem('tm_drive_url')||'').trim(), key:(localStorage.getItem('tm_drive_key')||'').trim()}; }
+function saveDriveCfg(){ localStorage.setItem('tm_drive_url',document.getElementById('dUrl').value.trim()); localStorage.setItem('tm_drive_key',document.getElementById('dKey').value.trim()); }
+function loadDriveCfg(){ const c=driveCfg(); const u=document.getElementById('dUrl'), k=document.getElementById('dKey'); if(u){u.value=c.url;k.value=c.key;} }
+function setSync(t){ ['syncState','syncState2'].forEach(id=>{const e=document.getElementById(id); if(e)e.textContent=t;}); }
+let pushTimer=null;
+function schedulePush(){ const c=driveCfg(); if(!c.url||!c.key) return; setSync('保存中…'); clearTimeout(pushTimer); pushTimer=setTimeout(pushDrive,900); }
+async function pushDrive(manual){
+  const c=driveCfg(); if(!c.url||!c.key){ if(manual)toast('設定にURLと合言葉を入れてください'); return; }
+  setSync('保存中…');
+  try{
+    const res=await fetch(c.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({key:c.key,data:state})});
+    const d=await res.json();
+    if(d.ok){ setSync('同期済み '+new Date().toLocaleTimeString().slice(0,5)); if(manual)toast('保存箱に送りました'); }
+    else if(d.error==='auth'){ setSync('合言葉が違います'); }
+    else setSync('保存に失敗');
+  }catch(e){ setSync('保存箱につながりません'); }
+}
+async function pullDrive(silent){
+  const c=driveCfg(); if(!c.url||!c.key){ if(!silent)toast('設定にURLと合言葉を入れてください'); return; }
+  setSync('読み込み中…');
+  try{
+    const res=await fetch(c.url+'?key='+encodeURIComponent(c.key));
+    const d=await res.json();
+    if(d.error==='auth'){ setSync('合言葉が違います'); return; }
+    if(d.empty){ setSync('保存箱は空です。まず「保存箱に送る」'); return; }
+    if(d.projects){ state=d; normalize(); persistLocal(); if(!state.projects[state.currentProject]) state.currentProject=Object.keys(state.projects)[0]; renderAll(); setSync('同期済み '+new Date().toLocaleTimeString().slice(0,5)); if(!silent)toast('保存箱から読み込みました'); }
+    else setSync('データの形が違います');
+  }catch(e){ setSync('保存箱につながりません'); }
+}
+function proj(){ return state.projects[state.currentProject]; }
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),1500); }
+function esc(s){ return (s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+function childCount(id){ if(!id) return 0; return proj().articles.filter(a=>a.parent===id).length; }
+function role(a){
+  if(!a.id) return {t:"—",c:""};
+  const ch=childCount(a.id);
+  if(!a.parent && ch===0) return {t:"単独",c:"b-solo"};
+  if(!a.parent) return {t:"最上位ピラー",c:"b-pillar"};
+  if(ch>0) return {t:"中間(親かつ子)",c:"b-mid"};
+  return {t:"末端クラスター",c:"b-leaf"};
+}
+
+/* projects */
+function renderProjects(){ const s=document.getElementById('projSel'); s.innerHTML=""; Object.keys(state.projects).forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=n; if(n===state.currentProject)o.selected=true; s.appendChild(o); }); }
+function switchProject(n){ state.currentProject=n; save(); renderAll(); }
+function newProject(){ const n=prompt("新しいプロジェクト名（例：事故物件、共有持分）"); if(!n)return; if(state.projects[n]){toast("同じ名前があります");return;} state.projects[n]={articles:[]}; state.currentProject=n; save(); renderAll(); toast("作成しました"); }
+function renameProject(){ const n=prompt("新しい名前",state.currentProject); if(!n||n===state.currentProject)return; if(state.projects[n]){toast("同じ名前があります");return;} state.projects[n]=state.projects[state.currentProject]; delete state.projects[state.currentProject]; state.currentProject=n; save(); renderAll(); }
+function deleteProject(){ if(Object.keys(state.projects).length<=1){toast("最後の1つは消せません");return;} if(!confirm(state.currentProject+" を削除しますか？"))return; delete state.projects[state.currentProject]; state.currentProject=Object.keys(state.projects)[0]; save(); renderAll(); }
+
+/* ---- sortable read-only table ---- */
+const HEADS=[["id","記事ID"],["parent","親記事ID"],["role","役割"],["child","子"],["title","記事タイトル"],["kw","メインKW"],["intent","検索意図"],["stage","段階"],["status","ステータス"],["priority","優先度"],["url","公開URL"],["draft","構成案URL"],["memo","備考"]];
+// 列幅（px）。最後は編集ボタン列。ドラッグで変更・保存される
+const DEFW=[84,96,100,44,210,160,250,96,104,72,210,170,150,64];
+let colw=(function(){try{const v=JSON.parse(localStorage.getItem("tm_colw2"));return (Array.isArray(v)&&v.length===DEFW.length)?v:DEFW.slice();}catch(e){return DEFW.slice();}})();
+function saveWidths(){ localStorage.setItem("tm_colw2", JSON.stringify(colw)); }
+const PAGE_SIZE=20; let page=1;
+function sortVal(a,k){
+  if(k==="role") return role(a).t;
+  if(k==="child") return childCount(a.id);
+  if(k==="status") return STORANK[a.status]??9;
+  if(k==="stage") return STARANK[a.stage]??9;
+  if(k==="priority") return PRIRANK[a.priority]??-1;
+  return (a[k]||"");
+}
+function setSort(k){ if(sortKey===k){ sortDir*=-1; } else { sortKey=k; sortDir=1; } page=1; renderMap(); }
+function clearAllFilters(){ document.getElementById('fKw').value=""; document.getElementById('fId').value=""; page=1; renderMap(); }
+function renderMap(){
+  const kw=document.getElementById('fKw').value.trim();
+  const idq=document.getElementById('fId').value.trim();
+  let rows=proj().articles.map((a,i)=>({a,i}))
+    .filter(o=>!kw||((o.a.kw||"")+(o.a.intent||"")+(o.a.title||"")).includes(kw))
+    // 記事ID または 親記事ID のどちらかに一致（OR）。ピラー本体と配下クラスターが両方残る
+    .filter(o=>!idq||(o.a.id||"").includes(idq)||(o.a.parent||"").includes(idq));
+  rows.sort((x,y)=>{
+    if(sortKey==="id"){ const ex=!x.a.id, ey=!y.a.id; if(ex!==ey) return ex?1:-1; }
+    const va=sortVal(x.a,sortKey), vb=sortVal(y.a,sortKey);
+    if(typeof va==="number"&&typeof vb==="number") return (va-vb)*sortDir;
+    return String(va).localeCompare(String(vb),"ja")*sortDir; });
+  const total=rows.length;
+  const pages=Math.max(1, Math.ceil(total/PAGE_SIZE));
+  if(page>pages) page=pages; if(page<1) page=1;
+  const start=(page-1)*PAGE_SIZE;
+  const pageRows=rows.slice(start, start+PAGE_SIZE);
+  let cg="<colgroup>"+colw.map(w=>`<col style="width:${w}px">`).join("")+"</colgroup>";
+  let th="<thead><tr>"+HEADS.map((hh,ci)=>`<th class="rzh" onclick="setSort('${hh[0]}')">${hh[1]}${sortKey===hh[0]?`<span class="ar">${sortDir>0?'▲':'▼'}</span>`:''}<span class="rz" data-c="${ci}" onmousedown="startResize(event,${ci})" onclick="event.stopPropagation()"></span></th>`).join("")+"<th></th></tr></thead>";
+  let body="<tbody>";
+  pageRows.forEach(o=>{
+    const a=o.a, r=role(a);
+    const stc=a.status==="公開済"?"s-pub":a.status==="構成案作成中"?"s-wip":"s-todo";
+    const pc=a.priority==="◎"?"pc3":a.priority==="○"?"pc2":a.priority==="△"?"pc1":"";
+    body+="<tr>"
+      +`<td>${esc(a.id)||'<span style="color:#bbb">—</span>'}</td>`
+      +`<td>${esc(a.parent)||'—'}</td>`
+      +`<td><span class="badge ${r.c}">${r.t}</span></td>`
+      +`<td style="text-align:center">${childCount(a.id)||''}</td>`
+      +`<td>${esc(a.title)||'<span style="color:#bbb">（未入力）</span>'}</td>`
+      +`<td class="kw">${esc(a.kw)}</td>`
+      +`<td>${esc(a.intent)}</td>`
+      +`<td>${esc(a.stage)}</td>`
+      +`<td><span class="stt ${stc}">${esc(a.status)}</span></td>`
+      +`<td>${a.priority?`<span class="pchip ${pc}">${a.priority}</span>`:''}</td>`
+      +`<td class="urlcell" title="${esc(a.url)}">${esc(a.url)}</td>`
+      +`<td class="urlcell" title="${esc(a.draft)}">${esc(a.draft)}</td>`
+      +`<td>${esc(a.memo)}</td>`
+      +`<td><button class="editbtn" onclick="openEdit(${o.i})">編集</button></td>`
+      +"</tr>";
+  });
+  body+="</tbody>";
+  document.getElementById('mapTable').innerHTML=cg+th+body;
+  renderPager(total, pages, start, pageRows.length);
+}
+function renderPager(total, pages, start, shown){
+  const el=document.getElementById('pager');
+  if(!el) return;
+  if(total===0){ el.innerHTML='<span class="pginfo">該当なし</span>'; return; }
+  const from=start+1, to=start+shown;
+  el.innerHTML=
+    `<button class="pgbtn" ${page<=1?'disabled':''} onclick="gotoPage(1)">«</button>`+
+    `<button class="pgbtn" ${page<=1?'disabled':''} onclick="gotoPage(${page-1})">前へ</button>`+
+    `<span class="pginfo">${from}〜${to}件／全${total}件　（${page}／${pages}ページ）</span>`+
+    `<button class="pgbtn" ${page>=pages?'disabled':''} onclick="gotoPage(${page+1})">次へ</button>`+
+    `<button class="pgbtn" ${page>=pages?'disabled':''} onclick="gotoPage(${pages})">»</button>`;
+}
+function gotoPage(p){ page=p; renderMap(); const w=document.querySelector('.mapwrap'); if(w) w.scrollTop=0; window.scrollTo({top:0,behavior:'smooth'}); }
+function startResize(e,ci){
+  e.preventDefault(); e.stopPropagation();
+  const sx=e.pageX, sw=colw[ci];
+  function mv(ev){ colw[ci]=Math.max(44, sw+(ev.pageX-sx)); const col=document.querySelectorAll("#mapTable col")[ci]; if(col) col.style.width=colw[ci]+"px"; }
+  function up(){ document.removeEventListener("mousemove",mv); document.removeEventListener("mouseup",up); saveWidths(); }
+  document.addEventListener("mousemove",mv); document.addEventListener("mouseup",up);
+}
+
+/* ---- modal edit ---- */
+function fillSelect(id,opts,val){ const s=document.getElementById(id); s.innerHTML=opts.map(o=>`<option ${o===val?'selected':''} value="${o}">${o||'—'}</option>`).join(""); }
+function openEdit(i){
+  editIdx=i;
+  const a = i>=0 ? proj().articles[i] : {id:"",parent:"",title:"",kw:"",intent:"",stage:"認知",status:"未着手",priority:"○",url:"",draft:"",memo:""};
+  document.getElementById('mTitle').textContent = i>=0 ? "記事を編集" : "記事を追加";
+  document.getElementById('m_id').value=a.id||"";
+  document.getElementById('m_parent').value=a.parent||"";
+  document.getElementById('m_title').value=a.title||"";
+  document.getElementById('m_kw').value=a.kw||"";
+  document.getElementById('m_intent').value=a.intent||"";
+  fillSelect('m_stage',STAGES,a.stage||"認知");
+  fillSelect('m_status',STATUSES,a.status||"未着手");
+  fillSelect('m_priority',PRIS,a.priority||"");
+  document.getElementById('m_url').value=a.url||"";
+  document.getElementById('m_draft').value=a.draft||"";
+  document.getElementById('m_memo').value=a.memo||"";
+  const r=i>=0?role(a):{t:"—"};
+  document.getElementById('m_auto').textContent = i>=0 ? `${r.t}　/　子記事数 ${childCount(a.id)}` : "保存後に自動表示されます";
+  document.getElementById('mDel').style.display = i>=0 ? "" : "none";
+  document.getElementById('overlay').classList.add('show');
+}
+function closeEdit(){ document.getElementById('overlay').classList.remove('show'); editIdx=-1; }
+function saveEdit(){
+  const obj={
+    id:document.getElementById('m_id').value.trim(),
+    parent:document.getElementById('m_parent').value.trim(),
+    title:document.getElementById('m_title').value.trim(),
+    kw:document.getElementById('m_kw').value.trim(),
+    intent:document.getElementById('m_intent').value.trim(),
+    stage:document.getElementById('m_stage').value,
+    status:document.getElementById('m_status').value,
+    priority:document.getElementById('m_priority').value,
+    url:document.getElementById('m_url').value.trim(),
+    draft:document.getElementById('m_draft').value.trim(),
+    memo:document.getElementById('m_memo').value.trim(),
+  };
+  if(editIdx>=0) proj().articles[editIdx]=obj; else proj().articles.push(obj);
+  save(); closeEdit(); renderMap(); toast("保存しました");
+}
+function delFromModal(){
+  if(editIdx<0) return;
+  const a=proj().articles[editIdx];
+  if(!confirm(`「${a.kw||a.title||'この記事'}」を削除しますか？`)) return;
+  proj().articles.splice(editIdx,1); save(); closeEdit(); renderMap(); toast("削除しました");
+}
+
+/* priority */
+function renderPriority(){
+  const list=proj().articles.filter(a=>a.status!=="公開済"&&a.kw).sort((x,y)=>PRIRANK[y.priority]-PRIRANK[x.priority]);
+  const el=document.getElementById('priList');
+  if(!list.length){ el.innerHTML='<div class="note">未公開の候補はありません。</div>'; return; }
+  el.innerHTML=list.map(a=>{ const rk=PRIRANK[a.priority]||1;
+    return `<div class="card"><div class="prbadge pr${rk}">${a.priority||"○"}</div><div>
+      <div class="k">${esc(a.kw)}</div><div class="meta">意図：${esc(a.intent)}　｜　親：${esc(a.parent||"—")}</div>
+      ${a.memo?`<div class="meta" style="color:var(--warn)">${esc(a.memo)}</div>`:""}</div></div>`; }).join("");
+}
+
+/* AI check */
+function saveRelay(){ localStorage.setItem("tm_relay", document.getElementById("relayInput").value.trim()); }
+function loadRelay(){ const i=document.getElementById("relayInput"); if(i) i.value=localStorage.getItem("tm_relay")||""; }
+async function aiCheck(){
+  const relay=(localStorage.getItem("tm_relay")||"").trim();
+  if(!relay){ toast("設定で中継URLを入れてください"); tab("set"); return; }
+  const headings=document.getElementById("chkInput").value.split(/\n/).map(s=>s.trim()).filter(Boolean);
+  if(!headings.length){ document.getElementById("chkResult").innerHTML='<div class="note">見出しを貼り付けてください。</div>'; return; }
+  const existing=proj().articles.filter(a=>a.status==="公開済"&&a.id).map(a=>({id:a.id,kw:a.kw,intent:a.intent}));
+  const st=document.getElementById("aiState"); st.textContent="判定中…";
+  try{
+    const res=await fetch(relay,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({headings,existing})});
+    const data=await res.json(); st.textContent="";
+    if(!Array.isArray(data)){ document.getElementById("chkResult").innerHTML='<div class="note flag-ng">判定に失敗：'+esc(JSON.stringify(data))+'</div>'; return; }
+    let rows=data.map(r=>{ const ng=r.verdict==="重複";
+      return `<tr><td class="${ng?'flag-ng':'flag-ok'}">${ng?'⚠ 重複':'OK'}</td><td>${esc(r.heading)}</td><td>${esc(r.article||"—")}</td><td>${esc(r.reason||"")}</td></tr>`; }).join("");
+    document.getElementById("chkResult").innerHTML=`<div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>判定</th><th>新規の見出し</th><th>重複する既存記事</th><th>理由</th></tr></thead><tbody>${rows}</tbody></table></div><div class="note">⚠は章にせず一文＋リンクにします。</div>`;
+  }catch(e){ st.textContent=""; document.getElementById("chkResult").innerHTML='<div class="note flag-ng">中継につながりませんでした。設定のURLとWorkerの状態を確認してください。</div>'; }
+}
+
+/* import/export */
+function exportJSON(){ const b=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download="topicmap_"+new Date().toISOString().slice(0,10)+".json"; a.click(); }
+function importJSON(ev){ const f=ev.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(d.projects){ state=d; Object.values(state.projects).forEach(p=>p.articles.forEach(a=>{if(a.title===undefined)a.title="";})); if(!state.projects[state.currentProject]) state.currentProject=Object.keys(state.projects)[0]; save(); renderAll(); toast("読み込みました"); } else toast("形式が違います"); }catch(e){ toast("読み込めませんでした"); } }; r.readAsText(f); ev.target.value=""; }
+
+function tab(t){ document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.t===t)); document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===t)); if(t==="pri") renderPriority(); if(t==="set"){ loadRelay(); loadDriveCfg(); } }
+function renderAll(){ renderProjects(); renderMap(); renderPriority(); loadRelay(); }
+document.getElementById('overlay').addEventListener('click',e=>{ if(e.target.id==='overlay') closeEdit(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeEdit(); });
+load(); renderAll(); loadDriveCfg(); if(driveCfg().url&&driveCfg().key){ pullDrive(true); }
+</script>
+</body>
+</html>
